@@ -1,4 +1,4 @@
-class Pagination
+class InfinitePagination
 
   reactivePagerButtons = new ReactiveVar(null)
   reactiveTotal = new ReactiveVar(null)
@@ -6,24 +6,33 @@ class Pagination
 
 
   constructor: (@collection, @selector = {}, options = {}) ->
-    @totalCountMethod = options.totalCountMethod || "totalCount"
-      
-    @sort = options.sort || null
-    @maxButtonCount = 10
-    @pageSize = options.pageSize || 10
+    @totalCountMethod = options.totalCountMethod
+    unless @totalCountMethod
+      throw new Meteor.Error("wrong_options", "totalCountMethod option must be specified to define total items count")
     
-    @queryPageName = options.queryPageName || "page"    
-    @templateName = options.templateName || "pagination"
-    @activeClass = options.activeClass || "active"
+    @sort = options.sort || null
+    @pageSize = options.pageSize || 10
+    @bottomOffset = options.bottomOffset || 0
+
+    @queryPageName = options.queryPageName || "page"
+    @templateName = options.templateName || "infinitePagination"
 
     currentParams = Router.current().getParams()
     @page = currentParams.query && parseInt(currentParams.query[@queryPageName]) || 1
 
-    Template[@templateName].helpers
-      pagerButtons: ->
-        reactivePagerButtons.get()
-      total: ->
-        reactiveTotal.get()
+
+    Template[@templateName].data =      
+      infiniteBottomOffset: @infiniteBottomOffset
+
+    pagination = @    
+    if @infinite      
+      Template[@templateName].loadNextPage = () ->
+        console.log "load next page"    
+        pagination.page++ 
+        subscription = Meteor.subscribe pagination.subscriptionName, pagination.selector, pagination.getSubscriptionOptions()
+        subscription.ready () ->
+          console.log "ready"
+
 
     @getPageRange = () ->
       @getPageCount () ->
@@ -53,12 +62,10 @@ class Pagination
   ###*
     Get subscription options
   ###
-  getSubscriptionOptions: () ->
+  getSubscriptionOptions: () ->    
     sort: @sort
-    limit: @pageSize
-    skip: (@page - 1) * @pageSize
-
-
+    limit: @pageSize * @page      
+    
   ###*
     Get pagination buttons
   ###
@@ -90,6 +97,8 @@ class Pagination
         pagination.total = total
         reactiveTotal.set total
         pagination.pageCount = Math.ceil(total / pagination.pageSize)
+        if pagination.page < pagination.pageCount
+          reactiveNextPageUrl.set pagination.createPageUrl(pagination.queryPageName, pagination.page + 1)
         cb.call pagination
     else
       cb.call pagination

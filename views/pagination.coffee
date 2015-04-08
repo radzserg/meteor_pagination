@@ -1,3 +1,3 @@
 Template.pagination.events
-  "click .pagination li": (e) ->
-    window.scrollTo(0, 0);
+  "click .pagination li": (e, template) ->    
+    window.scrollTo(0, 0)
