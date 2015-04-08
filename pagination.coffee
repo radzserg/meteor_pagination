@@ -63,9 +63,6 @@ class Pagination
       if @pageCount < 2
         return buttons
 
-      currentRoute = Router.current().route.getName()
-      currentParams = Router.current().getParams()
-
       [beginPage, endPage] = @getPageRange()
 
       while beginPage++ <= endPage

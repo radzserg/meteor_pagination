@@ -6,8 +6,8 @@ Meteor pagination based on subscription.
 ```coffeescript
 
     # subscriptions
-    Meteor.publish "masterGalleryPhotos", (filterSelector = {}, options = {}) ->
-      MasterGalleryPhotos.find(filterSelector, options)
+    Meteor.publish "userPhotos", (filterSelector = {}, options = {}) ->
+      UserPhotos.find(filterSelector, options)
 
 
     # your controller
