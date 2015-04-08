@@ -1,0 +1,9 @@
+<template name="pagination">
+    {{#if total}}
+        <ul class="pagination">
+            {{#each pagerButtons}}
+                <li class="{{class}}"><a href="{{ path }}">{{label}}</a></li>
+            {{/each}}
+        </ul>
+    {{/if}}
+</template>
