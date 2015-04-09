@@ -2,8 +2,7 @@ class Pagination
 
   reactivePagerButtons = new ReactiveVar(null)
   reactiveTotal = new ReactiveVar(null)
-  reactiveNextPageUrl = new ReactiveVar(null)
-
+  reactiveItems = new ReactiveVar(null)
 
   constructor: (@collection, @selector = {}, options = {}) ->
     @totalCountMethod = options.totalCountMethod || "totalCount"
@@ -19,10 +18,13 @@ class Pagination
     currentParams = Router.current().getParams()
     @page = currentParams.query && parseInt(currentParams.query[@queryPageName]) || 1
 
+    pagination = @
     Template[@templateName].helpers
       pagerButtons: ->
+        pagination.getButtons()
         reactivePagerButtons.get()
       total: ->
+        pagination.getPageCount()
         reactiveTotal.get()
 
     @getPageRange = () ->
@@ -46,7 +48,6 @@ class Pagination
     Get pagination items
   ###
   getItems: () ->
-    @getButtons()
     # Get total and assign buttons as reactive variable to template
     @items = @collection.find @selector, {sort: @sort}
 
@@ -90,9 +91,9 @@ class Pagination
         pagination.total = total
         reactiveTotal.set total
         pagination.pageCount = Math.ceil(total / pagination.pageSize)
-        cb.call pagination
+        cb.call pagination if cb
     else
-      cb.call pagination
+      cb.call pagination if cb
 
   ###*
     Create page URL based on current url

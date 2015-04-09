@@ -1,15 +1,11 @@
 class InfinitePagination
 
-  reactivePagerButtons = new ReactiveVar(null)
-  reactiveTotal = new ReactiveVar(null)
-  reactiveNextPageUrl = new ReactiveVar(null)
-
-
   constructor: (@collection, @selector = {}, options = {}) ->
-    @totalCountMethod = options.totalCountMethod
-    unless @totalCountMethod
-      throw new Meteor.Error("wrong_options", "totalCountMethod option must be specified to define total items count")
-    
+    @totalCountMethod = options.totalCountMethod || "totalCount"
+    @subscriptionName = options.subscriptionName
+    unless @subscriptionName
+      throw new Meteor.Error("wrong_options", "subscriptionName option must be specified")
+
     @sort = options.sort || null
     @pageSize = options.pageSize || 10
     @bottomOffset = options.bottomOffset || 0
@@ -24,38 +20,17 @@ class InfinitePagination
     Template[@templateName].data =      
       infiniteBottomOffset: @infiniteBottomOffset
 
-    pagination = @    
-    if @infinite      
-      Template[@templateName].loadNextPage = () ->
-        console.log "load next page"    
-        pagination.page++ 
-        subscription = Meteor.subscribe pagination.subscriptionName, pagination.selector, pagination.getSubscriptionOptions()
-        subscription.ready () ->
-          console.log "ready"
-
-
-    @getPageRange = () ->
-      @getPageCount () ->
-        beginPage = Math.max(0, @page - Math.ceil(@maxButtonCount / 2))
-        endPage = beginPage + @maxButtonCount  - 1
-        if endPage >= @pageCount
-          endPage = @pageCount - 1
-          beginPage = Math.max(0, endPage - @maxButtonCount + 1)
-        [beginPage, endPage]
-
-  ###*
-    Refresh pagination
-  ###
-  refresh: (cb) ->
-    @pageCount = null
-    @getButtons () ->
-      cb @ if cb
+    pagination = @
+    Template[@templateName].loadNextPage = () ->
+      if pagination.page + 1 <= pagination.pageCount
+        pagination.page++
+        Meteor.subscribe pagination.subscriptionName, pagination.selector, pagination.getSubscriptionOptions()
 
   ###*
     Get pagination items
   ###
   getItems: () ->
-    @getButtons()
+    @getPageCount()
     # Get total and assign buttons as reactive variable to template
     @items = @collection.find @selector, {sort: @sort}
 
@@ -65,27 +40,6 @@ class InfinitePagination
   getSubscriptionOptions: () ->    
     sort: @sort
     limit: @pageSize * @page      
-    
-  ###*
-    Get pagination buttons
-  ###
-  getButtons: (cb) ->
-    buttons = []
-    @getPageCount () ->
-      if @pageCount < 2
-        return buttons
-
-      [beginPage, endPage] = @getPageRange()
-
-      while beginPage++ <= endPage
-        url = @createPageUrl(@queryPageName, beginPage)
-        buttons.push
-          label: beginPage
-          class: if beginPage == @page then @activeClass else ""
-          path: url
-      @pagerButtons = buttons
-      reactivePagerButtons.set buttons
-      cb.call(@, buttons) if cb
 
   ###*
     Define page count
@@ -95,32 +49,7 @@ class InfinitePagination
     unless @pageCount
       Meteor.call @totalCountMethod, @collection._name, @selector, (err, total) ->
         pagination.total = total
-        reactiveTotal.set total
         pagination.pageCount = Math.ceil(total / pagination.pageSize)
-        if pagination.page < pagination.pageCount
-          reactiveNextPageUrl.set pagination.createPageUrl(pagination.queryPageName, pagination.page + 1)
-        cb.call pagination
+        cb.call pagination if cb
     else
-      cb.call pagination
-
-  ###*
-    Create page URL based on current url
-  ###
-  createPageUrl: (param, value) ->
-    url = location.href
-    val = new RegExp('(\\?|\\&)' + param + '=.*?(?=(&|$))')
-    parts = url.toString().split('#')
-    url = parts[0]
-    hash = parts[1]
-    qstring = /\?.+$/
-    newURL = url
-    if val.test(url)
-      newURL = url.replace(val, '$1' + param + '=' + value)
-    else if qstring.test(url)
-      newURL = url + '&' + param + '=' + value
-    else
-      newURL = url + '?' + param + '=' + value
-    if hash
-      newURL += '#' + hash
-    newURL
-
+      cb.call pagination if cb

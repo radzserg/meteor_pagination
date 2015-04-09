@@ -1,5 +1,5 @@
 Template.infinitePagination.rendered = () ->
-  offset = @data.infiniteBottomOffset
+  offset = @data.bottomOffset || 0
   template = @
   $(window).scroll ->
     if $(window).scrollTop() + $(window).height() > $(document).height() - offset

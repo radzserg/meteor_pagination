@@ -19,6 +19,14 @@ Meteor pagination based on subscription.
           pageSize: 8,
           sort: {"createdAt": -1}
 
+        ###
+        @pagination = new InfinitePagination MasterGalleryPhotos, galleryPhotoSelector,
+          bottomOffset: 200
+          subscriptionName: "userPhotos"
+          pageSize: 8,
+          sort: {"createdAt": -1}
+        ###
+
         Meteor.subscribe("userPhotos", @pagination.selector, @pagination.getSubscriptionOptions())
 
 

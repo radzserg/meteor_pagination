@@ -19,14 +19,19 @@ Package.onUse(function (api) {
         "meteor-platform",
         "mongo",
     ]);
-    api.addFiles('pagination.coffee');
+    api.addFiles([
+        'pagination.coffee',
+        'infinite_pagination.coffee'
+    ], "client");
 
     api.addFiles([
         "views/pagination.html",
         "views/pagination.coffee",
+        "views/infinite_pagination.html",
+        "views/infinite_pagination.coffee"
     ], "client");
 
-    api.export("Pagination");
+    api.export(["Pagination", "InfinitePagination"], "client");
 });
 
 /**
